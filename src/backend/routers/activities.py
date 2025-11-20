@@ -2,11 +2,12 @@
 Endpoints for the High School Management System API
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import RedirectResponse
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Annotated
 
-from ..database import activities_collection, teachers_collection
+from ..database import activities_collection
+from .auth import get_current_user, User
 
 router = APIRouter(
     prefix="/activities",
@@ -64,16 +65,12 @@ def get_available_days() -> List[str]:
     return days
 
 @router.post("/{activity_name}/signup")
-def signup_for_activity(activity_name: str, email: str, teacher_username: Optional[str] = Query(None)):
+def signup_for_activity(
+    activity_name: str, 
+    email: str,
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Sign up a student for an activity - requires teacher authentication"""
-    # Check teacher authentication
-    if not teacher_username:
-        raise HTTPException(status_code=401, detail="Authentication required for this action")
-    
-    teacher = teachers_collection.find_one({"_id": teacher_username})
-    if not teacher:
-        raise HTTPException(status_code=401, detail="Invalid teacher credentials")
-    
     # Get the activity
     activity = activities_collection.find_one({"_id": activity_name})
     if not activity:
@@ -96,16 +93,12 @@ def signup_for_activity(activity_name: str, email: str, teacher_username: Option
     return {"message": f"Signed up {email} for {activity_name}"}
 
 @router.post("/{activity_name}/unregister")
-def unregister_from_activity(activity_name: str, email: str, teacher_username: Optional[str] = Query(None)):
+def unregister_from_activity(
+    activity_name: str, 
+    email: str,
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Remove a student from an activity - requires teacher authentication"""
-    # Check teacher authentication
-    if not teacher_username:
-        raise HTTPException(status_code=401, detail="Authentication required for this action")
-    
-    teacher = teachers_collection.find_one({"_id": teacher_username})
-    if not teacher:
-        raise HTTPException(status_code=401, detail="Invalid teacher credentials")
-    
     # Get the activity
     activity = activities_collection.find_one({"_id": activity_name})
     if not activity:
