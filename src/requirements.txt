@@ -4,4 +4,4 @@ pymongo==4.12.1
 argon2==0.1.10
 argon2-cffi==23.1.0
 pyjwt==2.8.0
-python-multipart==0.0.9
+python-multipart==0.0.18
